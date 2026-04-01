@@ -1,289 +1,1686 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CryptoTracker Pro</title>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="CryptoPro">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2585/2585210.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CryptoTrackerPro.v1.2</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CryptoPro">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #080b10;
+  --bg2: #0d1117;
+  --bg3: #111827;
+  --surface: #161d2b;
+  --surface2: #1c2537;
+  --border: rgba(99,130,172,0.15);
+  --border2: rgba(99,130,172,0.28);
+  --cyan: #00d4ff;
+  --cyan2: #0099bb;
+  --gold: #f0b429;
+  --gold2: #c8941f;
+  --green: #00e676;
+  --red: #ff4d6a;
+  --text: #e2eaf7;
+  --text2: #7a90b2;
+  --text3: #4a5a78;
+  --mono: 'Space Mono', monospace;
+  --sans: 'DM Sans', sans-serif;
+  --r: 12px;
+  --r2: 18px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: calc(70px + env(safe-area-inset-bottom));
+}
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
-    
-    <style>
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        .nav-active { color: #3b82f6; background: rgba(59, 130, 246, 0.1); border-radius: 12px; }
-        
-        #mobile-menu { transition: transform 0.3s ease-in-out; transform: translateX(-100%); }
-        #mobile-menu.open { transform: translateX(0); }
-        #menu-overlay { transition: opacity 0.3s ease-in-out; display: none; }
-        #menu-overlay.show { display: block; opacity: 1; }
+/* GRID NOISE BACKGROUND */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
 
-        .btn-period { font-size: 10px; padding: 4px 12px; border-radius: 8px; background: #1e293b; color: #64748b; border: 1px solid #334155; }
-        .btn-period.active { background: #3b82f6; color: white; border-color: #3b82f6; }
-        
-        /* Correction pour le plein écran sur iOS */
-        body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
-    </style>
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* TYPOGRAPHY */
+h1 { font-size: clamp(1.4rem,4vw,2rem); font-weight: 600; }
+h2 { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: var(--text2); }
+
+/* LOGO */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-mark {
+  width: 32px; height: 32px;
+  position: relative;
+  flex-shrink: 0;
+}
+.logo-mark svg { width: 100%; height: 100%; }
+.logo-text {
+  font-family: var(--mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.03em;
+}
+.logo-text span { color: var(--cyan); }
+
+/* NAVBAR */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(8,11,16,0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1rem;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.currency-toggle {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.currency-toggle button {
+  padding: 6px 14px;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.currency-toggle button.active {
+  background: var(--cyan);
+  color: var(--bg);
+}
+
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(8,11,16,0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 0;
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  transition: color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-btn .nav-icon { font-size: 20px; transition: transform 0.2s; }
+.nav-btn .nav-label { font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.nav-btn.active { color: var(--cyan); }
+.nav-btn.active .nav-icon { transform: translateY(-2px); }
+
+/* PAGES */
+.page { display: none; }
+.page.active { display: block; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.container { max-width: 1200px; margin: 0 auto; padding: 1.2rem 1rem; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 1.2rem;
+}
+.card-sm {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1rem;
+}
+
+/* HERO BALANCE */
+.hero-balance {
+  padding: 1.5rem 0 0.5rem;
+}
+.balance-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.balance-amount {
+  font-family: var(--mono);
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  font-weight: 700;
+  color: var(--cyan);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.balance-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  margin-top: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+.balance-change.up { background: rgba(0,230,118,0.1); color: var(--green); }
+.balance-change.down { background: rgba(255,77,106,0.1); color: var(--red); }
+
+/* STAT TILES */
+.stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 1rem 0; }
+.stat-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 0.8rem;
+  text-align: center;
+}
+.stat-tile .st-label { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 5px; }
+.stat-tile .st-val { font-family: var(--mono); font-size: 0.9rem; font-weight: 700; color: var(--text); }
+.st-val.green { color: var(--green); }
+.st-val.red { color: var(--red); }
+.st-val.gold { color: var(--gold); }
+
+/* SECTION HEADER */
+.sec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+/* PERIOD PILLS */
+.period-pills { display: flex; gap: 4px; }
+.period-pill {
+  padding: 4px 10px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  font-family: var(--mono);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.period-pill.active {
+  background: var(--cyan);
+  color: var(--bg);
+  border-color: var(--cyan);
+}
+
+/* POSITION ROWS */
+.pos-table { width: 100%; border-collapse: collapse; }
+.pos-table th {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.pos-table td { padding: 10px 8px; border-bottom: 1px solid rgba(99,130,172,0.08); vertical-align: middle; }
+.pos-table tr:last-child td { border-bottom: none; }
+.pos-table tr:hover td { background: rgba(0,212,255,0.03); }
+.asset-name { font-weight: 600; font-size: 0.9rem; text-transform: capitalize; }
+.asset-qty { font-family: var(--mono); font-size: 0.7rem; color: var(--text2); }
+.asset-val { font-family: var(--mono); font-size: 0.85rem; font-weight: 700; }
+.pnl-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.pnl-badge.up { background: rgba(0,230,118,0.12); color: var(--green); }
+.pnl-badge.down { background: rgba(255,77,106,0.12); color: var(--red); }
+.delete-btn {
+  background: none;
+  border: 1px solid transparent;
+  color: var(--text3);
+  cursor: pointer;
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+.delete-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* EMPTY STATE */
+.empty-state { text-align: center; padding: 3rem 1rem; color: var(--text3); }
+.empty-state .es-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+.empty-state .es-text { font-size: 0.85rem; }
+
+/* FORMS */
+.form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text2); font-weight: 600; }
+.form-input {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 0.75rem 1rem;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.form-input:focus { border-color: var(--cyan); }
+.form-input::placeholder { color: var(--text3); }
+.form-input-mono { font-family: var(--mono); }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--r);
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.btn-primary { background: var(--cyan); color: var(--bg); }
+.btn-primary:hover { background: var(--cyan2); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-danger { background: rgba(255,77,106,0.15); color: var(--red); border: 1px solid rgba(255,77,106,0.3); }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+.btn-block { width: 100%; }
+
+/* ALERT ITEMS */
+.alert-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 8px;
+}
+.alert-info { flex: 1; }
+.alert-coin { font-weight: 600; font-size: 0.9rem; text-transform: capitalize; }
+.alert-condition { font-size: 0.75rem; color: var(--text2); margin-top: 2px; font-family: var(--mono); }
+.alert-active { display: flex; align-items: center; gap: 6px; }
+.toggle {
+  position: relative;
+  width: 38px; height: 22px;
+  flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  left: 2px; top: 2px;
+  background: var(--text3);
+  border-radius: 50%;
+  transition: 0.2s;
+}
+.toggle input:checked + .toggle-slider { background: rgba(0,212,255,0.2); border-color: var(--cyan); }
+.toggle input:checked + .toggle-slider::before { background: var(--cyan); transform: translateX(16px); }
+
+/* STRATEGY */
+.strategy-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 1.2rem;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.strategy-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.strategy-card.bull::before { background: linear-gradient(90deg, var(--green), transparent); }
+.strategy-card.bear::before { background: linear-gradient(90deg, var(--red), transparent); }
+.strategy-card.neutral::before { background: linear-gradient(90deg, var(--gold), transparent); }
+.strat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+.strat-title { font-weight: 600; font-size: 0.95rem; }
+.strat-badge { font-size: 0.62rem; font-weight: 700; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; font-family: var(--mono); }
+.badge-bull { background: rgba(0,230,118,0.12); color: var(--green); }
+.badge-bear { background: rgba(255,77,106,0.12); color: var(--red); }
+.badge-neutral { background: rgba(240,180,41,0.12); color: var(--gold); }
+.strat-desc { font-size: 0.82rem; color: var(--text2); line-height: 1.5; margin-bottom: 1rem; }
+.strat-steps { list-style: none; }
+.strat-steps li {
+  display: flex;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: var(--text2);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+.strat-steps li:last-child { border-bottom: none; }
+.strat-steps li::before {
+  content: attr(data-n);
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--cyan);
+  min-width: 18px;
+}
+
+/* CHART WRAPPER */
+.chart-wrap { position: relative; width: 100%; }
+
+/* DESKTOP LAYOUT */
+@media (min-width: 768px) {
+  body { padding-bottom: 0; }
+  .bottom-nav { display: none; }
+  .desktop-nav { display: flex !important; }
+  .container { padding: 2rem 1.5rem; }
+}
+.desktop-nav {
+  display: none;
+  align-items: center;
+  gap: 4px;
+}
+.desktop-nav button {
+  padding: 6px 14px;
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.desktop-nav button.active { background: rgba(0,212,255,0.1); color: var(--cyan); }
+.desktop-nav button:hover:not(.active) { background: var(--surface); color: var(--text); }
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 200;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+.modal-overlay.open { display: flex; }
+@media (min-width: 768px) {
+  .modal-overlay.open { align-items: center; }
+  .modal-panel { max-width: 480px; border-radius: var(--r2); }
+}
+.modal-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r2) var(--r2) 0 0;
+  padding: 1.5rem;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+.modal-title { font-size: 1.1rem; font-weight: 600; }
+.modal-close {
+  width: 32px; height: 32px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text2);
+}
+
+/* FAB */
+.fab {
+  position: fixed;
+  bottom: calc(80px + env(safe-area-inset-bottom));
+  right: 1.2rem;
+  width: 52px; height: 52px;
+  background: var(--cyan);
+  color: var(--bg);
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(0,212,255,0.35);
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  z-index: 90;
+}
+.fab:hover { transform: scale(1.08); }
+.fab:active { transform: scale(0.95); }
+@media (min-width: 768px) { .fab { display: none; } }
+
+/* DESKTOP ADD SECTION */
+.desktop-add { display: none; }
+@media (min-width: 768px) { .desktop-add { display: block; } }
+.mobile-add { display: block; }
+@media (min-width: 768px) { .mobile-add { display: none; } }
+
+/* TWO COLUMN DESKTOP */
+@media (min-width: 768px) {
+  .dash-grid { display: grid; grid-template-columns: 340px 1fr; gap: 1.5rem; align-items: start; }
+}
+.dash-grid { display: block; }
+
+/* ANALYTICS SELECTOR */
+.asset-pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
+.asset-pill {
+  padding: 6px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.asset-pill.active { background: rgba(0,212,255,0.1); border-color: var(--cyan); color: var(--cyan); }
+
+/* LOADING PULSE */
+.pulse { animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* NOTIFICATIONS */
+.notif {
+  position: fixed;
+  top: 70px;
+  right: 1rem;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 320px;
+}
+.notif-item {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 0.9rem 1rem;
+  font-size: 0.82rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  animation: notifIn 0.3s ease;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+@keyframes notifIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.notif-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.notif-body .notif-title { font-weight: 600; margin-bottom: 2px; }
+.notif-body .notif-sub { color: var(--text2); }
+
+/* SETTINGS */
+.settings-section { margin-bottom: 1.5rem; }
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 6px;
+}
+.settings-row-label { font-size: 0.9rem; font-weight: 500; }
+.settings-row-sub { font-size: 0.72rem; color: var(--text2); margin-top: 2px; }
+
+/* MARKET TICKER */
+.ticker-wrap {
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 0;
+  margin-bottom: 1rem;
+}
+.ticker-inner {
+  display: flex;
+  gap: 2rem;
+  white-space: nowrap;
+  animation: ticker 30s linear infinite;
+}
+@keyframes ticker {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+}
+.ticker-name { color: var(--text2); }
+.ticker-price { color: var(--text); }
+.ticker-chg { }
+.ticker-chg.up { color: var(--green); }
+.ticker-chg.down { color: var(--red); }
+
+/* SCORE BAR */
+.score-bar-wrap { margin: 0.6rem 0; }
+.score-bar-label { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text2); margin-bottom: 5px; }
+.score-bar-track { height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+
+/* RISK TAG */
+.risk-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 5px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-family: var(--mono);
+}
+.risk-low { background: rgba(0,230,118,0.12); color: var(--green); }
+.risk-med { background: rgba(240,180,41,0.12); color: var(--gold); }
+.risk-high { background: rgba(255,77,106,0.12); color: var(--red); }
+
+/* SUGGESTION ROW */
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.suggestion-item:hover { background: var(--surface2); }
+.suggestion-item .s-name { font-size: 0.85rem; font-weight: 600; }
+.suggestion-item .s-id { font-size: 0.7rem; color: var(--text2); }
+
+/* ANIMATION classes */
+.slide-in { animation: fadeUp 0.3s ease; }
+</style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen overflow-x-hidden">
+<body>
 
-    <div id="menu-overlay" onclick="toggleMenu()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] opacity-0"></div>
+<!-- NOTIFICATION CONTAINER -->
+<div class="notif" id="notifications"></div>
 
-    <aside id="mobile-menu" class="fixed top-0 left-0 h-full w-72 bg-slate-800 z-[70] p-6 shadow-2xl border-r border-slate-700">
-        <div class="flex justify-between items-center mb-10">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-white italic">C</div>
-                <span class="font-black text-lg tracking-tighter">Menu</span>
-            </div>
-            <button onclick="toggleMenu()" class="text-slate-400 p-2 text-xl">✕</button>
+<!-- MODAL ADD ASSET (mobile FAB) -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <span class="modal-title">Ajouter un actif</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-form-content">
+      <!-- filled dynamically -->
+    </div>
+  </div>
+</div>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="8" fill="#0d1117"/>
+        <path d="M6 16 L11 10 L16 14 L21 8 L26 12" stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="16" cy="16" r="3" fill="#00d4ff" opacity="0.2"/>
+        <circle cx="16" cy="16" r="1.5" fill="#00d4ff"/>
+        <path d="M13 22 L16 19 L19 22" stroke="#f0b429" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="16" cy="16" r="6.5" stroke="#00d4ff" stroke-width="0.5" stroke-opacity="0.3" stroke-dasharray="2 2"/>
+      </svg>
+    </div>
+    <span class="logo-text">Crypto<span>Pro</span></span>
+  </div>
+
+  <div class="desktop-nav" id="desktopNav">
+    <button onclick="navigate('dashboard')" id="dn-dashboard" class="active">Tableau de bord</button>
+    <button onclick="navigate('analytics')" id="dn-analytics">Analyses</button>
+    <button onclick="navigate('strategy')" id="dn-strategy">Stratégies</button>
+    <button onclick="navigate('alerts')" id="dn-alerts">Alertes</button>
+    <button onclick="navigate('settings')" id="dn-settings">Paramètres</button>
+  </div>
+
+  <div class="currency-toggle">
+    <button id="btn-usd" onclick="setCurrency('usd')" class="active">USD</button>
+    <button id="btn-eur" onclick="setCurrency('eur')">EUR</button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main>
+
+<!-- ==================== DASHBOARD ==================== -->
+<div id="page-dashboard" class="page active">
+<div class="container">
+
+  <!-- TICKER -->
+  <div class="ticker-wrap">
+    <div class="ticker-inner" id="tickerInner">
+      <span class="ticker-item"><span class="ticker-name">BTC</span><span class="ticker-price" id="t-btc">—</span><span class="ticker-chg" id="tc-btc">—</span></span>
+      <span class="ticker-item"><span class="ticker-name">ETH</span><span class="ticker-price" id="t-eth">—</span><span class="ticker-chg" id="tc-eth">—</span></span>
+      <span class="ticker-item"><span class="ticker-name">SOL</span><span class="ticker-price" id="t-sol">—</span><span class="ticker-chg" id="tc-sol">—</span></span>
+      <span class="ticker-item"><span class="ticker-name">BNB</span><span class="ticker-price" id="t-bnb">—</span><span class="ticker-chg" id="tc-bnb">—</span></span>
+      <span class="ticker-item"><span class="ticker-name">ADA</span><span class="ticker-price" id="t-ada">—</span><span class="ticker-chg" id="tc-ada">—</span></span>
+      <span class="ticker-item"><span class="ticker-name">XRP</span><span class="ticker-price" id="t-xrp">—</span><span class="ticker-chg" id="tc-xrp">—</span></span>
+      <!-- duplicate for loop -->
+      <span class="ticker-item"><span class="ticker-name">BTC</span><span class="ticker-price" id="t-btc2">—</span><span class="ticker-chg" id="tc-btc2">—</span></span>
+      <span class="ticker-item"><span class="ticker-name">ETH</span><span class="ticker-price" id="t-eth2">—</span><span class="ticker-chg" id="tc-eth2">—</span></span>
+      <span class="ticker-item"><span class="ticker-name">SOL</span><span class="ticker-price" id="t-sol2">—</span><span class="ticker-chg" id="tc-sol2">—</span></span>
+      <span class="ticker-item"><span class="ticker-name">BNB</span><span class="ticker-price" id="t-bnb2">—</span><span class="ticker-chg" id="tc-bnb2">—</span></span>
+      <span class="ticker-item"><span class="ticker-name">ADA</span><span class="ticker-price" id="t-ada2">—</span><span class="ticker-chg" id="tc-ada2">—</span></span>
+      <span class="ticker-item"><span class="ticker-name">XRP</span><span class="ticker-price" id="t-xrp2">—</span><span class="ticker-chg" id="tc-xrp2">—</span></span>
+    </div>
+  </div>
+
+  <!-- HERO BALANCE -->
+  <div class="hero-balance">
+    <div class="balance-label">Valeur totale du portefeuille</div>
+    <div class="balance-amount" id="totalValue">0,00</div>
+    <div class="balance-change up" id="totalChange" style="display:none">
+      <span id="changeIcon">▲</span>
+      <span id="changePct">0.00%</span>
+      <span id="changeAbs"></span>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stat-grid">
+    <div class="stat-tile">
+      <div class="st-label">Investi</div>
+      <div class="st-val" id="statCost">—</div>
+    </div>
+    <div class="stat-tile">
+      <div class="st-label">P&L Total</div>
+      <div class="st-val" id="statPnl">—</div>
+    </div>
+    <div class="stat-tile">
+      <div class="st-label">Actifs</div>
+      <div class="st-val gold" id="statCount">0</div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="card" style="margin-bottom: 1rem;">
+    <div class="sec-header">
+      <h2>Évolution estimée</h2>
+      <div class="period-pills">
+        <button class="period-pill active" onclick="loadTotalChart(7, this)">7J</button>
+        <button class="period-pill" onclick="loadTotalChart(30, this)">1M</button>
+        <button class="period-pill" onclick="loadTotalChart(365, this)">1A</button>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height: 200px;">
+      <canvas id="totalChart"></canvas>
+    </div>
+  </div>
+
+  <!-- DESKTOP GRID -->
+  <div class="dash-grid">
+
+    <!-- ADD FORM (desktop only) -->
+    <div class="desktop-add">
+      <div class="card">
+        <h2 style="margin-bottom: 1rem;">Ajouter une position</h2>
+        <div id="desktopFormContent"></div>
+      </div>
+    </div>
+
+    <!-- PORTFOLIO TABLE -->
+    <div>
+      <div class="card">
+        <div class="sec-header">
+          <h2>Mes positions</h2>
+          <span id="liveIndicator" class="pulse" style="font-size:0.6rem; color: var(--text3);">Live</span>
         </div>
-        
-        <nav class="flex flex-col gap-2">
-            <button onclick="navigate('dashboard')" id="m-nav-dashboard" class="nav-active flex items-center gap-3 p-4 font-bold text-sm uppercase tracking-widest">📊 Tableau</button>
-            <button onclick="navigate('analytics')" id="m-nav-analytics" class="flex items-center gap-3 p-4 font-bold text-sm text-slate-400 uppercase tracking-widest">📈 Analyses</button>
-            <button onclick="navigate('planner')" id="m-nav-planner" class="flex items-center gap-3 p-4 font-bold text-sm text-blue-400 uppercase tracking-widest">🛠️ Stratégies</button>
-            <button onclick="navigate('strategy')" id="m-nav-strategy" class="flex items-center gap-3 p-4 font-bold text-sm text-emerald-400 uppercase tracking-widest">🔔 Alertes</button>
-        </nav>
-    </aside>
+        <div id="portfolioContainer"></div>
+      </div>
+    </div>
 
-    <nav class="bg-slate-800/80 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
-        <div class="container mx-auto px-4 flex justify-between items-center h-16">
-            <button onclick="toggleMenu()" class="lg:hidden p-2 text-slate-300">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
+  </div>
 
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-white italic">C</div>
-                <span class="font-black tracking-tighter text-xl hidden sm:block">CryptoTracker</span>
-            </div>
+</div>
+</div>
 
-            <div class="flex gap-1 bg-slate-900 p-1 rounded-xl border border-slate-700">
-                <button onclick="setGlobalCurrency('usd')" id="btn-usd" class="px-3 py-1 rounded-lg text-[10px] font-bold bg-blue-600 text-white">USD</button>
-                <button onclick="setGlobalCurrency('eur')" id="btn-eur" class="px-3 py-1 rounded-lg text-[10px] font-bold text-slate-400">EUR</button>
-            </div>
+<!-- ==================== ANALYTICS ==================== -->
+<div id="page-analytics" class="page">
+<div class="container">
+  <h2 style="margin-bottom: 1rem;">Analyse de marché</h2>
+
+  <div class="asset-pill-row" id="analyticsPills"></div>
+
+  <div class="card" style="margin-bottom: 1rem;">
+    <div class="sec-header">
+      <h2 id="analyticsTitle">Sélectionnez un actif</h2>
+      <div class="period-pills">
+        <button class="period-pill active" onclick="loadAnalyticsChart(7, this)">7J</button>
+        <button class="period-pill" onclick="loadAnalyticsChart(30, this)">1M</button>
+        <button class="period-pill" onclick="loadAnalyticsChart(90, this)">3M</button>
+        <button class="period-pill" onclick="loadAnalyticsChart(365, this)">1A</button>
+      </div>
+    </div>
+    <div class="chart-wrap" style="height: 240px;">
+      <canvas id="analyticsChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 1rem;">
+    <h2 style="margin-bottom: 1rem;">Répartition du portefeuille</h2>
+    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <div class="chart-wrap" style="height: 180px; flex: 0 0 180px;">
+        <canvas id="donutChart"></canvas>
+      </div>
+      <div id="donutLegend" style="flex: 1; min-width: 150px; font-size: 0.8rem;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-bottom: 1rem;">Indicateurs de l'actif sélectionné</h2>
+    <div id="analyticsMetrics" style="font-size: 0.82rem; color: var(--text2);">Sélectionnez un actif ci-dessus.</div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== STRATEGY ==================== -->
+<div id="page-strategy" class="page">
+<div class="container">
+  <h2 style="margin-bottom: 1rem;">Stratégies d'investissement</h2>
+
+  <div class="strategy-card bull">
+    <div class="strat-header">
+      <span class="strat-title">DCA — Dollar Cost Averaging</span>
+      <span class="strat-badge badge-bull">Recommandé</span>
+    </div>
+    <p class="strat-desc">Investir une somme fixe à intervalles réguliers, quelle que soit le cours. Réduit l'impact de la volatilité sur le long terme.</p>
+    <ul class="strat-steps">
+      <li data-n="01">Choisir un montant hebdomadaire ou mensuel (ex : 50 €)</li>
+      <li data-n="02">Sélectionner 1 à 3 actifs de premier rang (BTC, ETH...)</li>
+      <li data-n="03">Configurer un achat automatique récurrent sur votre exchange</li>
+      <li data-n="04">Ne pas vendre lors des corrections — tenir le cap</li>
+    </ul>
+    <div style="margin-top: 1rem; display: flex; gap: 8px; align-items: center;">
+      <span class="risk-tag risk-low">Risque faible</span>
+      <span style="font-size: 0.7rem; color: var(--text3);">Horizon : 2 ans+</span>
+    </div>
+  </div>
+
+  <div class="strategy-card neutral">
+    <div class="strat-header">
+      <span class="strat-title">Rééquilibrage de portefeuille</span>
+      <span class="strat-badge badge-neutral">Intermédiaire</span>
+    </div>
+    <p class="strat-desc">Maintenir des allocations cibles en vendant les actifs surpondérés et en achetant les sous-pondérés. Discipline de vente automatique.</p>
+    <ul class="strat-steps">
+      <li data-n="01">Définir vos allocations cibles (ex : 60% BTC, 30% ETH, 10% Alts)</li>
+      <li data-n="02">Rééquilibrer tous les trimestres ou si un actif dévie de ±20%</li>
+      <li data-n="03">Prendre des bénéfices progressivement sur les actifs surperformants</li>
+      <li data-n="04">Conserver un minimum de 20% en stablecoins pour saisir les dips</li>
+    </ul>
+    <div style="margin-top: 1rem; display: flex; gap: 8px; align-items: center;">
+      <span class="risk-tag risk-med">Risque modéré</span>
+      <span style="font-size: 0.7rem; color: var(--text3);">Horizon : 1–3 ans</span>
+    </div>
+  </div>
+
+  <div class="strategy-card bear">
+    <div class="strat-header">
+      <span class="strat-title">Pyramiding — Renforcement en baisse</span>
+      <span class="strat-badge badge-bear">Avancé</span>
+    </div>
+    <p class="strat-desc">Acheter des volumes croissants lors des baisses successives pour abaisser son prix moyen d'acquisition (DCA agressif).</p>
+    <ul class="strat-steps">
+      <li data-n="01">Diviser le capital prévu en 4 à 6 tranches</li>
+      <li data-n="02">Déployer la première tranche à cours actuel</li>
+      <li data-n="03">Chaque palier : acheter 2× la tranche précédente si -15%</li>
+      <li data-n="04">Définir un stop-loss absolu pour protéger le capital</li>
+    </ul>
+    <div style="margin-top: 1rem; display: flex; gap: 8px; align-items: center;">
+      <span class="risk-tag risk-high">Risque élevé</span>
+      <span style="font-size: 0.7rem; color: var(--text3);">Réservé aux experts</span>
+    </div>
+  </div>
+
+  <!-- DCA CALCULATOR -->
+  <div class="card" style="margin-top: 1.5rem;">
+    <h2 style="margin-bottom: 1rem;">Simulateur DCA</h2>
+    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+      <div class="form-group">
+        <label class="form-label">Investissement mensuel (€)</label>
+        <input type="number" class="form-input form-input-mono" id="dcaAmount" value="100" oninput="calcDCA()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Durée (mois)</label>
+        <input type="number" class="form-input form-input-mono" id="dcaMonths" value="24" oninput="calcDCA()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rendement annuel estimé (%)</label>
+        <input type="number" class="form-input form-input-mono" id="dcaRate" value="40" oninput="calcDCA()">
+      </div>
+    </div>
+    <div style="margin-top: 1.2rem; background: var(--bg2); border-radius: var(--r); padding: 1rem;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.82rem;">
+        <span style="color: var(--text2);">Total investi</span>
+        <span class="form-input-mono" id="dcaTotalIn" style="font-family: var(--mono); font-weight: 700;">—</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.82rem;">
+        <span style="color: var(--text2);">Valeur estimée</span>
+        <span style="font-family: var(--mono); font-weight: 700; color: var(--green);" id="dcaResult">—</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 0.82rem;">
+        <span style="color: var(--text2);">Gain potentiel</span>
+        <span style="font-family: var(--mono); font-weight: 700; color: var(--cyan);" id="dcaGain">—</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ==================== ALERTS ==================== -->
+<div id="page-alerts" class="page">
+<div class="container">
+  <div class="sec-header">
+    <h2>Alertes de prix</h2>
+    <button class="btn btn-ghost" style="padding: 6px 14px; font-size: 0.78rem;" onclick="openAddAlert()">+ Ajouter</button>
+  </div>
+
+  <div id="alertsList"></div>
+
+  <div class="modal-overlay" id="alertModal">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <span class="modal-title">Nouvelle alerte</span>
+        <button class="modal-close" onclick="closeAlertModal()">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+        <div class="form-group">
+          <label class="form-label">Actif (ID CoinGecko)</label>
+          <input type="text" class="form-input" id="alertCoin" placeholder="bitcoin, ethereum...">
         </div>
-    </nav>
-
-    <main class="container mx-auto p-4 lg:p-10">
-        <div id="page-dashboard" class="space-y-6 fade-in">
-            <header class="flex justify-between items-end">
-                <div>
-                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Solde Total</p>
-                    <p id="total-value" class="text-3xl font-mono font-bold text-emerald-400">0.00 $</p>
-                </div>
-                <div id="market-status" class="text-[9px] text-slate-500 bg-slate-800 px-2 py-1 rounded border border-slate-700">Chargement...</div>
-            </header>
-
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div class="lg:col-span-4 space-y-6">
-                    <section class="bg-slate-800 p-6 rounded-3xl border border-slate-700 shadow-xl">
-                        <h2 class="text-[10px] font-black uppercase text-blue-400 mb-4 tracking-widest italic">Ajouter un actif</h2>
-                        <div class="space-y-3">
-                            <input type="text" id="asset-name" placeholder="Nom (ex: bitcoin)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500">
-                            <div class="grid grid-cols-2 gap-2">
-                                <input type="number" id="asset-amount" placeholder="Qté" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 outline-none">
-                                <input type="number" id="asset-price" placeholder="Prix" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 outline-none">
-                            </div>
-                            <button onclick="addPosition()" class="w-full bg-blue-600 py-3 rounded-xl font-bold">Enregistrer</button>
-                        </div>
-                    </section>
-                </div>
-
-                <div class="lg:col-span-8 space-y-6">
-                    <div class="bg-slate-800 rounded-3xl border border-slate-700 overflow-hidden shadow-xl">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-900/50 text-slate-500 text-[10px] uppercase">
-                                <tr><th class="p-4">Actif</th><th class="p-4 text-center">Profit</th><th class="p-4 text-center">Action</th></tr>
-                            </thead>
-                            <tbody id="portfolio-body" class="divide-y divide-slate-700/50"></tbody>
-                        </table>
-                    </div>
-
-                    <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 shadow-xl">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-[10px] font-black uppercase text-slate-400 italic">Évolution estimée</h2>
-                            <div class="flex gap-1">
-                                <button onclick="updateTotalHistory(30, this)" class="btn-period active">30j</button>
-                                <button onclick="updateTotalHistory(365, this)" class="btn-period">1an</button>
-                            </div>
-                        </div>
-                        <div class="h-[250px]"><canvas id="totalHistoryChart"></canvas></div>
-                    </div>
-                </div>
-            </div>
+        <div class="form-group">
+          <label class="form-label">Condition</label>
+          <select class="form-input" id="alertCondition">
+            <option value="above">Au-dessus de</option>
+            <option value="below">En-dessous de</option>
+          </select>
         </div>
-
-        <div id="page-analytics" class="hidden space-y-6 fade-in">
-            <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700">
-                <select id="asset-selector" onchange="updateAnalytics()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-6 font-bold text-blue-400"></select>
-                <div class="h-[300px]"><canvas id="evolutionChart"></canvas></div>
-            </div>
+        <div class="form-group">
+          <label class="form-label">Prix cible (<span id="alertCurSym">$</span>)</label>
+          <input type="number" class="form-input form-input-mono" id="alertPrice" placeholder="0.00">
         </div>
+        <button class="btn btn-primary btn-block" onclick="saveAlert()">Enregistrer l'alerte</button>
+      </div>
+    </div>
+  </div>
 
-        <div id="page-planner" class="hidden max-w-xl mx-auto fade-in">
-            <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 text-center">
-                <h2 class="text-xl font-black mb-4">⚙️ Paramètres</h2>
-                <p class="text-slate-400 text-sm mb-6">Vos données sont stockées localement sur ce téléphone.</p>
-                <button onclick="localStorage.clear(); location.reload();" class="bg-rose-500/10 text-rose-500 border border-rose-500/20 px-6 py-2 rounded-xl text-xs font-bold uppercase">Réinitialiser l'App</button>
-            </div>
+  <!-- PRICE HISTORY for alerts context -->
+  <div class="card" style="margin-top: 1.5rem;">
+    <h2 style="margin-bottom: 0.8rem;">Signaux de marché (BTC/ETH)</h2>
+    <div id="marketSignals">
+      <div style="margin-bottom: 1rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+          <span>Bitcoin — Sentiment</span>
+          <span style="color: var(--green); font-family: var(--mono); font-size: 0.75rem;" id="btcSentiment">—</span>
         </div>
-        
-        <div id="page-strategy" class="hidden fade-in text-center py-20 text-slate-500 italic text-sm">Signaux indisponibles.</div>
-    </main>
+        <div class="score-bar-wrap">
+          <div class="score-bar-track">
+            <div class="score-bar-fill" id="btcSentimentBar" style="width: 0%; background: var(--green);"></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px;">
+          <span>Ethereum — Sentiment</span>
+          <span style="color: var(--cyan); font-family: var(--mono); font-size: 0.75rem;" id="ethSentiment">—</span>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-bar-track">
+            <div class="score-bar-fill" id="ethSentimentBar" style="width: 0%; background: var(--cyan);"></div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size: 0.68rem; color: var(--text3); margin-top: 1rem;">* Basé sur la variation 24h et la position par rapport aux moyennes mobiles. À titre indicatif uniquement.</p>
+    </div>
+  </div>
+</div>
+</div>
 
-    <script>
-        let portfolio = JSON.parse(localStorage.getItem('myCryptoPortfolio')) || [];
-        let lastPrices = JSON.parse(localStorage.getItem('lastKnownPrices')) || {};
-        let globalCurrency = localStorage.getItem('prefCurrency') || 'usd';
-        let totalHistoryChart = null, evolutionChart = null;
-        const symbols = { usd: '$', eur: '€' };
+<!-- ==================== SETTINGS ==================== -->
+<div id="page-settings" class="page">
+<div class="container">
+  <h2 style="margin-bottom: 1rem;">Paramètres</h2>
 
-        document.addEventListener('DOMContentLoaded', () => { 
-            renderDashboard(); 
-            updatePrices(); 
-        });
+  <div class="settings-section">
+    <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text3); margin-bottom: 8px; padding: 0 4px;">Données</div>
 
-        function toggleMenu() {
-            document.getElementById('mobile-menu').classList.toggle('open');
-            document.getElementById('menu-overlay').classList.toggle('show');
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">Positions enregistrées</div>
+        <div class="settings-row-sub" id="settingsCount">0 actif(s)</div>
+      </div>
+      <span style="font-family: var(--mono); font-size: 0.8rem; color: var(--cyan);" id="settingsVersion">v2.0</span>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">Stockage local</div>
+        <div class="settings-row-sub">Données stockées sur cet appareil uniquement</div>
+      </div>
+      <span style="font-size: 1.1rem;">🔒</span>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">Mise à jour des prix</div>
+        <div class="settings-row-sub" id="lastUpdate">Jamais</div>
+      </div>
+      <button class="btn btn-ghost" style="padding: 6px 12px; font-size: 0.75rem;" onclick="refreshPrices()">Actualiser</button>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text3); margin-bottom: 8px; padding: 0 4px;">À propos</div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">CryptoTracker Pro</div>
+        <div class="settings-row-sub">Suivi de portefeuille crypto, local et privé</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 2rem;">
+    <button class="btn btn-danger btn-block" onclick="resetApp()">Réinitialiser toutes les données</button>
+  </div>
+</div>
+</div>
+
+</main>
+
+<!-- FAB (mobile) -->
+<button class="fab" id="fabBtn" onclick="openAddModal()">+</button>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="bn-dashboard" onclick="navigate('dashboard')">
+    <span class="nav-icon">◈</span>
+    <span class="nav-label">Tableau</span>
+  </button>
+  <button class="nav-btn" id="bn-analytics" onclick="navigate('analytics')">
+    <span class="nav-icon">◎</span>
+    <span class="nav-label">Analyses</span>
+  </button>
+  <button class="nav-btn" id="bn-strategy" onclick="navigate('strategy')">
+    <span class="nav-icon">◇</span>
+    <span class="nav-label">Stratégies</span>
+  </button>
+  <button class="nav-btn" id="bn-alerts" onclick="navigate('alerts')">
+    <span class="nav-icon">◉</span>
+    <span class="nav-label">Alertes</span>
+  </button>
+  <button class="nav-btn" id="bn-settings" onclick="navigate('settings')">
+    <span class="nav-icon">◫</span>
+    <span class="nav-label">Réglages</span>
+  </button>
+</nav>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let portfolio = JSON.parse(localStorage.getItem('ctpPortfolio') || '[]');
+let alerts = JSON.parse(localStorage.getItem('ctpAlerts') || '[]');
+let prices = JSON.parse(localStorage.getItem('ctpPrices') || '{}');
+let currency = localStorage.getItem('ctpCurrency') || 'usd';
+let currentPage = 'dashboard';
+let analyticsAsset = null;
+let totalChartInstance = null;
+let analyticsChartInstance = null;
+let donutChartInstance = null;
+const SYM = { usd: '$', eur: '€' };
+const RATE = 1.08; // fallback EUR/USD
+const COINGECKO = 'https://api.coingecko.com/api/v3';
+const TICKER_IDS = ['bitcoin','ethereum','solana','binancecoin','cardano','ripple'];
+const TICKER_KEYS = ['btc','eth','sol','bnb','ada','xrp'];
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderCurrencyToggle();
+  renderForm('desktopFormContent');
+  renderPortfolio();
+  renderAlerts();
+  updateSettings();
+  calcDCA();
+  loadTickerPrices();
+  loadTotalChart(7);
+  setTimeout(refreshPrices, 300);
+  setInterval(refreshPrices, 60000);
+  setInterval(checkAlerts, 30000);
+});
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+
+  // Bottom nav
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const bn = document.getElementById('bn-' + page);
+  if (bn) bn.classList.add('active');
+
+  // Desktop nav
+  document.querySelectorAll('.desktop-nav button').forEach(b => b.classList.remove('active'));
+  const dn = document.getElementById('dn-' + page);
+  if (dn) dn.classList.add('active');
+
+  // Page-specific actions
+  if (page === 'analytics') { renderAnalyticsPills(); renderDonut(); }
+  if (page === 'settings') updateSettings();
+  if (page === 'alerts') renderAlerts();
+}
+
+// ============================================================
+// CURRENCY
+// ============================================================
+function setCurrency(c) {
+  currency = c;
+  localStorage.setItem('ctpCurrency', c);
+  renderCurrencyToggle();
+  renderPortfolio();
+  renderAlerts();
+  if (analyticsAsset) loadAnalyticsChart(30);
+  loadTotalChart(7);
+  document.getElementById('alertCurSym').textContent = SYM[currency];
+}
+function renderCurrencyToggle() {
+  document.getElementById('btn-usd').classList.toggle('active', currency === 'usd');
+  document.getElementById('btn-eur').classList.toggle('active', currency === 'eur');
+}
+
+// ============================================================
+// PRICES
+// ============================================================
+async function refreshPrices() {
+  const ids = [...new Set([...portfolio.map(p => p.id), ...TICKER_IDS])];
+  if (!ids.length) return;
+  try {
+    const res = await fetch(`${COINGECKO}/simple/price?ids=${ids.join(',')}&vs_currencies=usd,eur&include_24hr_change=true`);
+    if (!res.ok) return;
+    const data = await res.json();
+    Object.assign(prices, data);
+    localStorage.setItem('ctpPrices', JSON.stringify(prices));
+    localStorage.setItem('ctpLastUpdate', new Date().toISOString());
+    renderPortfolio();
+    updateTickerUI();
+    updateSettings();
+    checkAlerts();
+    updateMarketSignals();
+  } catch(e) { console.log('Offline'); }
+}
+
+async function loadTickerPrices() {
+  try {
+    const res = await fetch(`${COINGECKO}/simple/price?ids=${TICKER_IDS.join(',')}&vs_currencies=usd,eur&include_24hr_change=true`);
+    if (!res.ok) return;
+    const data = await res.json();
+    Object.assign(prices, data);
+    updateTickerUI();
+  } catch(e) {}
+}
+
+function updateTickerUI() {
+  const pairs = [
+    ['bitcoin','btc'],['ethereum','eth'],['solana','sol'],
+    ['binancecoin','bnb'],['cardano','ada'],['ripple','xrp']
+  ];
+  pairs.forEach(([id, key]) => {
+    const p = prices[id];
+    if (!p) return;
+    const pr = p[currency];
+    const chg = p[`${currency}_24h_change`] || p['usd_24h_change'] || 0;
+    const fmt = pr ? fmtPrice(pr) : '—';
+    const chgFmt = chg ? (chg > 0 ? '+' : '') + chg.toFixed(2) + '%' : '—';
+    const cls = chg >= 0 ? 'up' : 'down';
+    ['', '2'].forEach(s => {
+      const el = document.getElementById(`t-${key}${s}`);
+      const ec = document.getElementById(`tc-${key}${s}`);
+      if (el) el.textContent = SYM[currency] + fmt;
+      if (ec) { ec.textContent = chgFmt; ec.className = `ticker-chg ${cls}`; }
+    });
+  });
+}
+
+function fmtPrice(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1000) return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+  if (n >= 1) return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n.toLocaleString('fr-FR', { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+}
+function fmtVal(n) {
+  return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ============================================================
+// PORTFOLIO RENDERING
+// ============================================================
+function getConsolidated() {
+  const c = {};
+  portfolio.forEach(pos => {
+    if (!c[pos.id]) c[pos.id] = { id: pos.id, amt: 0, costUSD: 0 };
+    const costUSD = pos.buyCurrency === 'usd' ? pos.buyPrice * pos.amount : (pos.buyPrice * pos.amount) * RATE;
+    c[pos.id].amt += pos.amount;
+    c[pos.id].costUSD += costUSD;
+  });
+  return c;
+}
+
+function renderPortfolio() {
+  const cont = document.getElementById('portfolioContainer');
+  const cons = getConsolidated();
+  const keys = Object.keys(cons);
+
+  let totalVal = 0, totalCost = 0;
+  keys.forEach(id => {
+    const d = cons[id];
+    const liveUSD = prices[id]?.usd || 0;
+    totalVal += liveUSD * d.amt;
+    totalCost += d.costUSD;
+  });
+  const totalValCur = currency === 'usd' ? totalVal : totalVal / RATE;
+  const totalCostCur = currency === 'usd' ? totalCost : totalCost / RATE;
+  const totalPnl = totalValCur - totalCostCur;
+  const totalPnlPct = totalCostCur > 0 ? (totalPnl / totalCostCur) * 100 : 0;
+
+  // Update hero
+  const sym = SYM[currency];
+  document.getElementById('totalValue').textContent = sym + ' ' + fmtVal(totalValCur);
+  const chgEl = document.getElementById('totalChange');
+  if (totalCostCur > 0) {
+    chgEl.style.display = 'inline-flex';
+    chgEl.className = 'balance-change ' + (totalPnl >= 0 ? 'up' : 'down');
+    document.getElementById('changeIcon').textContent = totalPnl >= 0 ? '▲' : '▼';
+    document.getElementById('changePct').textContent = Math.abs(totalPnlPct).toFixed(2) + '%';
+    document.getElementById('changeAbs').textContent = (totalPnl >= 0 ? '+' : '') + sym + fmtVal(totalPnl);
+  } else { chgEl.style.display = 'none'; }
+
+  document.getElementById('statCost').textContent = sym + fmtVal(totalCostCur);
+  const pnlEl = document.getElementById('statPnl');
+  pnlEl.textContent = (totalPnl >= 0 ? '+' : '') + sym + fmtVal(totalPnl);
+  pnlEl.className = 'st-val ' + (totalPnl >= 0 ? 'green' : 'red');
+  document.getElementById('statCount').textContent = keys.length;
+
+  if (!keys.length) {
+    cont.innerHTML = `<div class="empty-state"><div class="es-icon">◎</div><div class="es-text">Ajoutez votre première position<br>pour commencer le suivi</div></div>`;
+    return;
+  }
+
+  let html = '<table class="pos-table"><thead><tr><th>Actif</th><th style="text-align:right">Valeur</th><th style="text-align:right">P&L</th><th></th></tr></thead><tbody>';
+  keys.forEach(id => {
+    const d = cons[id];
+    const liveUSD = prices[id]?.usd || 0;
+    const liveCur = currency === 'usd' ? liveUSD : (liveUSD / RATE);
+    const costCur = currency === 'usd' ? d.costUSD : d.costUSD / RATE;
+    const val = liveCur * d.amt;
+    const pnl = val - costCur;
+    const pnlPct = costCur > 0 ? (pnl / costCur) * 100 : 0;
+    const updown = pnl >= 0 ? 'up' : 'down';
+    html += `<tr>
+      <td><div class="asset-name">${id}</div><div class="asset-qty">${d.amt % 1 === 0 ? d.amt : d.amt.toFixed(6)} unités</div></td>
+      <td style="text-align:right"><span class="asset-val">${sym}${fmtVal(val)}</span></td>
+      <td style="text-align:right"><span class="pnl-badge ${updown}">${pnl >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%</span></td>
+      <td style="text-align:right"><button class="delete-btn" onclick="deleteAsset('${id}')">✕</button></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  cont.innerHTML = html;
+}
+
+// ============================================================
+// ADD / DELETE ASSET
+// ============================================================
+function renderForm(containerId) {
+  const cont = document.getElementById(containerId);
+  if (!cont) return;
+  const popularCoins = ['bitcoin','ethereum','solana','binancecoin','cardano','ripple','polkadot','avalanche-2'];
+  cont.innerHTML = `
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <div class="form-group">
+        <label class="form-label">Actif (ID CoinGecko)</label>
+        <input type="text" class="form-input" id="inp-name-${containerId}" placeholder="bitcoin, ethereum..." list="coinlist-${containerId}">
+        <datalist id="coinlist-${containerId}">${popularCoins.map(c=>`<option value="${c}">`).join('')}</datalist>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="form-group">
+          <label class="form-label">Quantité</label>
+          <input type="number" class="form-input form-input-mono" id="inp-qty-${containerId}" placeholder="0.00" step="any">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prix achat (${SYM[currency]})</label>
+          <input type="number" class="form-input form-input-mono" id="inp-price-${containerId}" placeholder="0.00" step="any">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="addAsset('${containerId}')">Enregistrer la position</button>
+    </div>`;
+}
+
+function addAsset(src) {
+  const id = document.getElementById(`inp-name-${src}`)?.value?.toLowerCase().trim();
+  const qty = parseFloat(document.getElementById(`inp-qty-${src}`)?.value);
+  const pr = parseFloat(document.getElementById(`inp-price-${src}`)?.value);
+  if (!id || !qty || !pr || qty <= 0 || pr <= 0) { showNotif('error', 'Données incomplètes', 'Remplissez tous les champs.'); return; }
+  portfolio.push({ id, amount: qty, buyPrice: pr, buyCurrency: currency, date: new Date().toISOString() });
+  localStorage.setItem('ctpPortfolio', JSON.stringify(portfolio));
+  closeModal();
+  renderPortfolio();
+  renderForm('desktopFormContent');
+  renderForm('modal-form-content');
+  showNotif('success', 'Position ajoutée', `${qty} ${id} @ ${SYM[currency]}${fmtVal(pr)}`);
+  refreshPrices();
+}
+
+function deleteAsset(id) {
+  if (!confirm(`Supprimer toutes les positions ${id} ?`)) return;
+  portfolio = portfolio.filter(p => p.id !== id);
+  localStorage.setItem('ctpPortfolio', JSON.stringify(portfolio));
+  renderPortfolio();
+  showNotif('info', 'Actif supprimé', id);
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openAddModal() {
+  renderForm('modal-form-content');
+  document.getElementById('addModal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('addModal').classList.remove('open');
+}
+document.getElementById('addModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('addModal')) closeModal();
+});
+
+// ============================================================
+// CHARTS — TOTAL HISTORY
+// ============================================================
+async function loadTotalChart(days, btn = null) {
+  if (btn) {
+    document.querySelectorAll('#page-dashboard .period-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const ctx = document.getElementById('totalChart');
+  if (!ctx) return;
+
+  const totalVal = parseFloat(document.getElementById('totalValue').textContent.replace(/[^\d.,]/g,'').replace(',','.')) || 0;
+  if (totalVal === 0) { renderEmptyChart(ctx, totalChartInstance); return; }
+
+  try {
+    const res = await fetch(`${COINGECKO}/coins/bitcoin/market_chart?vs_currency=${currency}&days=${days}&interval=${days <= 30 ? 'daily' : 'weekly'}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const trend = data.prices.map(p => p[1]);
+    const base = trend[trend.length - 1] || 1;
+    const history = trend.map(v => (v / base) * totalVal);
+    const labels = data.prices.map(p => {
+      const d = new Date(p[0]);
+      return days <= 30 ? d.toLocaleDateString('fr-FR', {day:'numeric',month:'short'}) : d.toLocaleDateString('fr-FR', {month:'short',year:'2-digit'});
+    });
+    if (totalChartInstance) totalChartInstance.destroy();
+    totalChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [{ data: history, borderColor: '#00d4ff', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(0,212,255,0.05)', tension: 0.3 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: {
+          callbacks: { label: c => SYM[currency] + fmtVal(c.parsed.y) }
+        }},
+        scales: {
+          x: { grid: { color: 'rgba(99,130,172,0.08)' }, ticks: { color: '#4a5a78', maxTicksLimit: 6, font: { family: 'Space Mono', size: 10 } } },
+          y: { grid: { color: 'rgba(99,130,172,0.08)' }, ticks: { color: '#4a5a78', font: { family: 'Space Mono', size: 10 }, callback: v => SYM[currency] + fmtVal(v) } }
         }
+      }
+    });
+  } catch(e) {}
+}
 
-        function navigate(pageId) {
-            showPage(pageId);
-            toggleMenu();
+function renderEmptyChart(ctx, inst) {
+  if (inst) inst.destroy();
+}
+
+// ============================================================
+// ANALYTICS
+// ============================================================
+function renderAnalyticsPills() {
+  const row = document.getElementById('analyticsPills');
+  const ids = [...new Set(portfolio.map(p => p.id))];
+  if (!ids.length) { row.innerHTML = '<span style="color:var(--text3);font-size:0.82rem;">Aucun actif dans le portefeuille.</span>'; return; }
+  row.innerHTML = ids.map(id => `<button class="asset-pill ${analyticsAsset === id ? 'active' : ''}" onclick="selectAnalyticsAsset('${id}')">${id.toUpperCase()}</button>`).join('');
+  if (!analyticsAsset && ids.length) selectAnalyticsAsset(ids[0]);
+}
+
+function selectAnalyticsAsset(id) {
+  analyticsAsset = id;
+  document.querySelectorAll('.asset-pill').forEach(p => p.classList.toggle('active', p.textContent === id.toUpperCase()));
+  document.getElementById('analyticsTitle').textContent = id.toUpperCase() + ' — 30 jours';
+  loadAnalyticsChart(30);
+  renderAnalyticsMetrics(id);
+}
+
+async function loadAnalyticsChart(days, btn = null) {
+  if (!analyticsAsset) return;
+  if (btn) {
+    document.querySelectorAll('#page-analytics .period-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  document.getElementById('analyticsTitle').textContent = analyticsAsset.toUpperCase() + ` — ${days <= 7 ? '7J' : days <= 30 ? '1M' : days <= 90 ? '3M' : '1A'}`;
+  const ctx = document.getElementById('analyticsChart');
+  try {
+    const res = await fetch(`${COINGECKO}/coins/${analyticsAsset}/market_chart?vs_currency=${currency}&days=${days}&interval=${days <= 30 ? 'daily' : 'weekly'}`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const priceArr = data.prices.map(p => p[1]);
+    const labels = data.prices.map(p => {
+      const d = new Date(p[0]);
+      return days <= 30 ? d.toLocaleDateString('fr-FR', {day:'numeric',month:'short'}) : d.toLocaleDateString('fr-FR', {month:'short'});
+    });
+    const minP = Math.min(...priceArr), maxP = Math.max(...priceArr);
+    const firstP = priceArr[0], lastP = priceArr[priceArr.length-1];
+    const up = lastP >= firstP;
+    if (analyticsChartInstance) analyticsChartInstance.destroy();
+    analyticsChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: { labels, datasets: [{ data: priceArr, borderColor: up ? '#00e676' : '#ff4d6a', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: up ? 'rgba(0,230,118,0.05)' : 'rgba(255,77,106,0.05)', tension: 0.3 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => SYM[currency] + fmtPrice(c.parsed.y) } } },
+        scales: {
+          x: { grid: { color: 'rgba(99,130,172,0.08)' }, ticks: { color: '#4a5a78', maxTicksLimit: 7, font: { family: 'Space Mono', size: 10 } } },
+          y: { grid: { color: 'rgba(99,130,172,0.08)' }, ticks: { color: '#4a5a78', font: { family: 'Space Mono', size: 10 }, callback: v => SYM[currency] + fmtPrice(v) } }
         }
+      }
+    });
+  } catch(e) {}
+}
 
-        function showPage(pageId) {
-            document.querySelectorAll('[id^="page-"]').forEach(p => p.classList.add('hidden'));
-            document.getElementById('page-' + pageId).classList.remove('hidden');
-            if (pageId === 'analytics') populateAssetSelector();
-        }
+function renderAnalyticsMetrics(id) {
+  const p = prices[id];
+  const sym = SYM[currency];
+  if (!p) { document.getElementById('analyticsMetrics').textContent = 'Prix non disponible.'; return; }
+  const pr = p[currency] || p['usd'];
+  const chg = p[`${currency}_24h_change`] || p['usd_24h_change'] || 0;
+  const up = chg >= 0;
+  document.getElementById('analyticsMetrics').innerHTML = `
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div class="card-sm"><div style="font-size:0.6rem;color:var(--text3);margin-bottom:4px;">PRIX ACTUEL</div><div style="font-family:var(--mono);font-size:1rem;font-weight:700;">${sym}${fmtPrice(pr)}</div></div>
+      <div class="card-sm"><div style="font-size:0.6rem;color:var(--text3);margin-bottom:4px;">VARIATION 24H</div><div style="font-family:var(--mono);font-size:1rem;font-weight:700;color:${up ? 'var(--green)' : 'var(--red)'}">${up ? '+' : ''}${chg.toFixed(2)}%</div></div>
+    </div>`;
+}
 
-        async function updatePrices() {
-            const ids = [...new Set(portfolio.map(p => p.id))];
-            if (ids.length > 0) {
-                try {
-                    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd,eur&ids=${ids.join(',')}`);
-                    lastPrices = await res.json();
-                    localStorage.setItem('lastKnownPrices', JSON.stringify(lastPrices));
-                } catch (e) { console.log("Offline mode"); }
-            }
-            renderDashboard();
-            updateTotalHistory(30);
-            document.getElementById('market-status').innerText = `Live ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-        }
+function renderDonut() {
+  const cons = getConsolidated();
+  const keys = Object.keys(cons);
+  if (!keys.length) return;
+  const colors = ['#00d4ff','#f0b429','#00e676','#ff4d6a','#a78bfa','#34d399'];
+  const vals = keys.map(id => {
+    const liveUSD = prices[id]?.usd || 0;
+    return liveUSD * cons[id].amt;
+  });
+  const total = vals.reduce((a,b) => a+b, 0);
+  const ctx = document.getElementById('donutChart');
+  if (donutChartInstance) donutChartInstance.destroy();
+  donutChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: keys,
+      datasets: [{ data: vals, backgroundColor: colors.slice(0, keys.length), borderWidth: 0, hoverOffset: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: { legend: { display: false } }
+    }
+  });
+  const legendEl = document.getElementById('donutLegend');
+  legendEl.innerHTML = keys.map((id, i) => {
+    const pct = total > 0 ? ((vals[i]/total)*100).toFixed(1) : '0';
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <span style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0;"></span>
+      <span style="font-weight:600;text-transform:capitalize;">${id}</span>
+      <span style="color:var(--text2);margin-left:auto;font-family:var(--mono);font-size:0.75rem;">${pct}%</span>
+    </div>`;
+  }).join('');
+}
 
-        function renderDashboard() {
-            const body = document.getElementById('portfolio-body');
-            body.innerHTML = ''; let totalVal = 0; const sym = symbols[globalCurrency];
-            const consolidated = getConsolidatedData();
+// ============================================================
+// ALERTS
+// ============================================================
+function openAddAlert() { document.getElementById('alertModal').classList.add('open'); }
+function closeAlertModal() { document.getElementById('alertModal').classList.remove('open'); }
+document.getElementById('alertModal').addEventListener('click', e => { if (e.target === document.getElementById('alertModal')) closeAlertModal(); });
 
-            Object.keys(consolidated).forEach(id => {
-                const d = consolidated[id]; 
-                const live = lastPrices[id]?.[globalCurrency] || 0;
-                const avg = d.costInGlobal / d.amt; 
-                const pnl = live ? ((live - avg) / avg) * 100 : 0;
-                totalVal += (live * d.amt);
+function saveAlert() {
+  const coin = document.getElementById('alertCoin').value.toLowerCase().trim();
+  const cond = document.getElementById('alertCondition').value;
+  const price = parseFloat(document.getElementById('alertPrice').value);
+  if (!coin || !price || price <= 0) { showNotif('error', 'Données invalides', 'Remplissez tous les champs.'); return; }
+  alerts.push({ id: Date.now(), coin, condition: cond, price, currency, active: true, triggered: false });
+  localStorage.setItem('ctpAlerts', JSON.stringify(alerts));
+  closeAlertModal();
+  renderAlerts();
+  showNotif('success', 'Alerte créée', `${coin} ${cond === 'above' ? '>' : '<'} ${SYM[currency]}${fmtVal(price)}`);
+  document.getElementById('alertCoin').value = '';
+  document.getElementById('alertPrice').value = '';
+}
 
-                body.innerHTML += `<tr class="border-b border-slate-700/30">
-                    <td class="p-4 font-bold capitalize">${id}</td>
-                    <td class="p-4 text-center font-bold ${pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${pnl.toFixed(2)}%</td>
-                    <td class="p-4 text-center"><button onclick="deleteAsset('${id}')" class="text-slate-500">✕</button></td></tr>`;
-            });
+function renderAlerts() {
+  const el = document.getElementById('alertsList');
+  if (!alerts.length) {
+    el.innerHTML = `<div class="empty-state"><div class="es-icon">◉</div><div class="es-text">Aucune alerte configurée.<br>Ajoutez une alerte de prix pour être notifié.</div></div>`;
+    return;
+  }
+  el.innerHTML = alerts.map(a => `
+    <div class="alert-item">
+      <div class="alert-info">
+        <div class="alert-coin">${a.coin} ${a.triggered ? '✓' : ''}</div>
+        <div class="alert-condition">${a.condition === 'above' ? '▲ au-dessus de' : '▼ en-dessous de'} ${SYM[a.currency] || '$'}${fmtVal(a.price)}</div>
+      </div>
+      <div class="alert-active">
+        <label class="toggle">
+          <input type="checkbox" ${a.active ? 'checked' : ''} onchange="toggleAlert(${a.id})">
+          <span class="toggle-slider"></span>
+        </label>
+        <button class="delete-btn" onclick="deleteAlert(${a.id})" style="margin-left:6px;">✕</button>
+      </div>
+    </div>`).join('');
+}
 
-            document.getElementById('total-value').innerText = totalVal.toLocaleString(undefined, {minimumFractionDigits: 2}) + " " + sym;
-        }
+function toggleAlert(id) {
+  const a = alerts.find(x => x.id === id);
+  if (a) { a.active = !a.active; a.triggered = false; }
+  localStorage.setItem('ctpAlerts', JSON.stringify(alerts));
+}
 
-        async function updateTotalHistory(days, btn = null) {
-            if(btn) { document.querySelectorAll('.btn-period').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
-            const ctx = document.getElementById('totalHistoryChart').getContext('2d');
-            try {
-                const res = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=${globalCurrency}&days=${days}&interval=daily`);
-                const data = await res.json();
-                const trend = data.prices.map(p => p[1]);
-                const lastP = trend[trend.length-1];
-                const currentVal = parseFloat(document.getElementById('total-value').innerText.replace(/[^\d.-]/g, '')) || 0;
-                const history = trend.map(tp => (tp / lastP) * (currentVal || 1000));
-                const labels = data.prices.map(p => new Date(p[0]).toLocaleDateString('fr-FR', {day:'numeric', month:'short'}));
+function deleteAlert(id) {
+  alerts = alerts.filter(a => a.id !== id);
+  localStorage.setItem('ctpAlerts', JSON.stringify(alerts));
+  renderAlerts();
+}
 
-                if(totalHistoryChart) totalHistoryChart.destroy();
-                totalHistoryChart = new Chart(ctx, {
-                    type: 'line',
-                    data: { labels: labels, datasets: [{ data: history, borderColor: '#3b82f6', borderWidth: 2, pointRadius: 0, fill: true, backgroundColor: 'rgba(59, 130, 246, 0.05)', tension: 0.3 }]},
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} }, scales: { x:{grid:{display:false}, ticks:{maxTicksLimit: 6}}, y:{grid:{color:'rgba(255,255,255,0.05)'}} } }
-                });
-            } catch(e) {}
-        }
+function checkAlerts() {
+  alerts.forEach(a => {
+    if (!a.active || a.triggered) return;
+    const p = prices[a.coin];
+    if (!p) return;
+    const livePrice = p[a.currency] || p['usd'];
+    const hit = (a.condition === 'above' && livePrice >= a.price) || (a.condition === 'below' && livePrice <= a.price);
+    if (hit) {
+      a.triggered = true;
+      a.active = false;
+      showNotif('alert', `🔔 Alerte déclenchée !`, `${a.coin.toUpperCase()} ${a.condition === 'above' ? '>' : '<'} ${SYM[a.currency] || '$'}${fmtVal(a.price)}`);
+    }
+  });
+  localStorage.setItem('ctpAlerts', JSON.stringify(alerts));
+  renderAlerts();
+}
 
-        function getConsolidatedData() {
-            const consolidated = {};
-            portfolio.forEach(pos => {
-                if (!consolidated[pos.id]) consolidated[pos.id] = { id: pos.id, amt: 0, costInGlobal: 0 };
-                let itemCost = pos.buyPrice * pos.amount;
-                if (pos.buyCurrency !== globalCurrency) itemCost = (globalCurrency === 'usd') ? itemCost * 1.08 : itemCost / 1.08;
-                consolidated[pos.id].amt += pos.amount;
-                consolidated[pos.id].costInGlobal += itemCost;
-            });
-            return consolidated;
-        }
+function updateMarketSignals() {
+  const btc = prices['bitcoin'];
+  const eth = prices['ethereum'];
+  const calcSentiment = p => {
+    if (!p) return { label: 'N/A', score: 50 };
+    const chg = p['usd_24h_change'] || 0;
+    const score = Math.max(0, Math.min(100, 50 + chg * 2));
+    const label = score > 65 ? 'Haussier' : score < 35 ? 'Baissier' : 'Neutre';
+    return { label, score };
+  };
+  const bs = calcSentiment(btc);
+  const es = calcSentiment(eth);
+  document.getElementById('btcSentiment').textContent = bs.label;
+  document.getElementById('btcSentimentBar').style.width = bs.score + '%';
+  document.getElementById('btcSentimentBar').style.background = bs.score > 65 ? '#00e676' : bs.score < 35 ? '#ff4d6a' : '#f0b429';
+  document.getElementById('ethSentiment').textContent = es.label;
+  document.getElementById('ethSentimentBar').style.width = es.score + '%';
+  document.getElementById('ethSentimentBar').style.background = es.score > 65 ? '#00d4ff' : es.score < 35 ? '#ff4d6a' : '#f0b429';
+}
 
-        function addPosition() {
-            const id = document.getElementById('asset-name').value.toLowerCase().trim();
-            const amt = parseFloat(document.getElementById('asset-amount').value);
-            const pr = parseFloat(document.getElementById('asset-price').value);
-            if (id && amt && pr) {
-                portfolio.push({ id, amount: amt, buyPrice: pr, buyCurrency: globalCurrency });
-                localStorage.setItem('myCryptoPortfolio', JSON.stringify(portfolio));
-                updatePrices();
-                ['asset-name', 'asset-amount', 'asset-price'].forEach(i => document.getElementById(i).value = '');
-            }
-        }
+// ============================================================
+// DCA CALCULATOR
+// ============================================================
+function calcDCA() {
+  const monthly = parseFloat(document.getElementById('dcaAmount')?.value) || 0;
+  const months = parseInt(document.getElementById('dcaMonths')?.value) || 0;
+  const rate = parseFloat(document.getElementById('dcaRate')?.value) || 0;
+  const totalIn = monthly * months;
+  const monthlyRate = (rate / 100) / 12;
+  let val = 0;
+  for (let i = 0; i < months; i++) val = (val + monthly) * (1 + monthlyRate);
+  const gain = val - totalIn;
+  document.getElementById('dcaTotalIn').textContent = fmtVal(totalIn) + ' €';
+  document.getElementById('dcaResult').textContent = fmtVal(val) + ' €';
+  document.getElementById('dcaGain').textContent = '+' + fmtVal(gain) + ' €';
+}
 
-        function deleteAsset(id) {
-            if(confirm('Supprimer ?')) {
-                portfolio = portfolio.filter(p => p.id !== id);
-                localStorage.setItem('myCryptoPortfolio', JSON.stringify(portfolio));
-                renderDashboard();
-            }
-        }
+// ============================================================
+// SETTINGS
+// ============================================================
+function updateSettings() {
+  const cons = getConsolidated();
+  document.getElementById('settingsCount').textContent = Object.keys(cons).length + ' actif(s) · ' + portfolio.length + ' position(s)';
+  const lu = localStorage.getItem('ctpLastUpdate');
+  if (lu) {
+    const d = new Date(lu);
+    document.getElementById('lastUpdate').textContent = 'Actualisé à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+}
 
-        function setGlobalCurrency(cur) {
-            globalCurrency = cur; localStorage.setItem('prefCurrency', cur);
-            location.reload();
-        }
+function resetApp() {
+  if (!confirm('Supprimer toutes les données ? Cette action est irréversible.')) return;
+  localStorage.clear();
+  location.reload();
+}
 
-        function populateAssetSelector() {
-            const sel = document.getElementById('asset-selector');
-            const assets = [...new Set(portfolio.map(p => p.id))];
-            sel.innerHTML = assets.map(a => `<option value="${a}">${a.toUpperCase()}</option>`).join('');
-            if(assets.length) updateAnalytics();
-        }
-
-        async function updateAnalytics() {
-            const id = document.getElementById('asset-selector').value;
-            const ctx = document.getElementById('evolutionChart').getContext('2d');
-            try {
-                const res = await fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=${globalCurrency}&days=30`);
-                const data = await res.json();
-                const prices = data.prices.map(p => p[1]);
-                if(evolutionChart) evolutionChart.destroy();
-                evolutionChart = new Chart(ctx, {
-                    type: 'line',
-                    data: { labels: prices.map((_,i)=>i), datasets: [{ label: id, data: prices, borderColor: '#3b82f6', fill: false, pointRadius: 0 }] },
-                    options: { responsive: true, maintainAspectRatio: false }
-                });
-            } catch(e) {}
-        }
-    </script>
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+function showNotif(type, title, sub) {
+  const icons = { success: '✓', error: '✕', info: 'ℹ', alert: '🔔' };
+  const colors = { success: 'var(--green)', error: 'var(--red)', info: 'var(--cyan)', alert: 'var(--gold)' };
+  const cont = document.getElementById('notifications');
+  const el = document.createElement('div');
+  el.className = 'notif-item';
+  el.style.borderColor = colors[type] || 'var(--border2)';
+  el.innerHTML = `<span class="notif-icon" style="color:${colors[type]}">${icons[type] || '·'}</span>
+    <div class="notif-body"><div class="notif-title">${title}</div><div class="notif-sub">${sub}</div></div>`;
+  cont.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+</script>
 </body>
 </html>
