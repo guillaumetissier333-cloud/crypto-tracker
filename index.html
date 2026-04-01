@@ -1,436 +1,164 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CryptoTracker Pro V1.5</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="CryptoPro">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-:root {
-  --bg:#080b10;--bg2:#0d1117;--bg3:#111827;
-  --surface:#161d2b;--surface2:#1c2537;
-  --border:rgba(99,130,172,0.15);--border2:rgba(99,130,172,0.28);
-  --cyan:#00d4ff;--cyan2:#0099bb;--gold:#f0b429;--green:#00e676;--red:#ff4d6a;
-  --text:#e2eaf7;--text2:#7a90b2;--text3:#4a5a78;
-  --mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;
-  --r:12px;--r2:18px;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;padding-bottom:80px;}
-.hidden { display: none !important; }
-
-/* CONFIG & AUTH SCREENS */
-#configScreen, #authScreen { position:fixed; inset:0; z-index:999; background:var(--bg); display:none; align-items:center; justify-content:center; padding:1.5rem; }
-.visible { display:flex !important; }
-.box { width:100%; max-width:400px; background:var(--surface); border:1px solid var(--border2); border-radius:var(--r2); padding:2rem; }
-
-/* FORMS */
-.form-group{margin-bottom:1rem; display:flex; flex-direction:column; gap:0.5rem;}
-.form-label{font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text2); font-weight:600;}
-.form-input{background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); padding:0.75rem 1rem; color:var(--text); outline:none; width:100%;}
-.btn{width:100%; padding:0.8rem; border-radius:var(--r); border:none; font-weight:700; cursor:pointer; transition:0.2s; margin-top:0.5rem;}
-.btn-primary{background:var(--cyan); color:var(--bg);}
-.btn-ghost{background:transparent; color:var(--text2); border:1px solid var(--border);}
-
-/* NAVBAR & LAYOUT */
-.navbar{background:rgba(8,11,16,0.85); backdrop-filter:blur(20px); border-bottom:1px solid var(--border); padding:0 1rem; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100;}
-.logo{display:flex; align-items:center; gap:10px; font-family:var(--mono); font-weight:700;}
-.logo span{color:var(--cyan);}
-.container{max-width:1200px; margin:0 auto; padding:1.5rem 1rem;}
-
-/* DASHBOARD ELEMENTS */
-.hero-balance{text-align:center; padding:2rem 0;}
-.balance-amount{font-family:var(--mono); font-size:2.5rem; font-weight:700; color:var(--cyan);}
-.card{background:var(--surface); border:1px solid var(--border); border-radius:var(--r2); padding:1.2rem; margin-bottom:1rem;}
-.pos-table{width:100%; border-collapse:collapse; font-size:0.9rem;}
-.pos-table th{text-align:left; color:var(--text3); font-size:0.7rem; padding:10px; border-bottom:1px solid var(--border);}
-.pos-table td{padding:12px 10px; border-bottom:1px solid rgba(255,255,255,0.03);}
-.pnl-badge{padding:2px 8px; border-radius:4px; font-family:var(--mono); font-size:0.7rem;}
-.up{color:var(--green); background:rgba(0,230,118,0.1);}
-.down{color:var(--red); background:rgba(255,77,106,0.1);}
-.delete-btn{color:var(--text3); background:none; border:none; cursor:pointer;}
-
-@media(min-width:768px){
-    .dash-grid{display:grid; grid-template-columns:350px 1fr; gap:1.5rem;}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoPro Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --bg: #080b10; --surface: #161d2b; --cyan: #00d4ff; }
+        body { background: var(--bg); color: white; font-family: sans-serif; }
+        .hidden { display: none !important; }
+        .card { background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 15px; padding: 20px; }
+        input { background: #0d1117; border: 1px solid #30363d; color: white; padding: 10px; border-radius: 8px; width: 100%; margin-bottom: 10px; }
+        .btn-blue { background: var(--cyan); color: #080b10; font-weight: bold; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; border: none; }
+    </style>
 </head>
-<body>
+<body class="p-4">
 
-<div id="configScreen">
-    <div class="box">
-        <h2 style="margin-bottom:1rem">Configuration Cloud</h2>
-        <div class="form-group">
-            <label class="form-label">URL Supabase</label>
-            <input type="text" id="cfgUrl" class="form-input" placeholder="https://xyz.supabase.co">
-        </div>
-        <div class="form-group">
-            <label class="form-label">Clé Anon API</label>
-            <input type="text" id="cfgKey" class="form-input" placeholder="eyJhbGci...">
-        </div>
-        <button class="btn btn-primary" onclick="saveConfig()">Connecter la base</button>
-    </div>
-</div>
-
-<div id="authScreen">
-    <div class="box">
-        <div class="logo" style="margin-bottom:2rem; font-size:1.5rem">Crypto<span>Pro</span></div>
-        <div id="auth-form" class="flex flex-col gap-4">
-            <div class="form-group">
-                <label class="form-label">Email</label>
-                <input type="email" id="authEmail" class="form-input">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Mot de passe</label>
-                <input type="password" id="authPwd" class="form-input">
-            </div>
-            <button class="btn btn-primary" onclick="handleAuth('login')">Se connecter</button>
-            <button class="btn btn-ghost" onclick="handleAuth('signup')">Créer un compte</button>
+    <div id="config-section" class="hidden flex flex-col items-center justify-center min-h-screen">
+        <div class="card w-full max-w-md">
+            <h1 class="text-xl font-bold mb-4 text-cyan-400 text-center">Configuration Supabase</h1>
+            <p class="text-sm text-gray-400 mb-6">Collez vos clés API pour activer le Cloud.</p>
+            <input type="text" id="cfg-url" placeholder="URL Supabase (https://...)">
+            <input type="text" id="cfg-key" placeholder="Clé Anon (eyJ...)">
+            <button onclick="saveSettings()" class="btn-blue">Connecter mon projet</button>
         </div>
     </div>
-</div>
 
-<nav class="navbar" id="mainNav" style="display:none">
-    <div class="logo">Crypto<span>Pro</span></div>
-    <div style="display:flex; gap:10px; align-items:center">
-        <div id="userEmail" style="font-size:0.7rem; color:var(--text2)"></div>
-        <button onclick="handleLogout()" style="background:none; border:none; color:var(--red); font-size:0.7rem; font-weight:700; cursor:pointer">Quitter</button>
-    </div>
-</nav>
-
-<main id="mainApp" style="display:none" class="container">
-    <div class="hero-balance">
-        <div style="font-size:0.7rem; color:var(--text3); text-transform:uppercase; letter-spacing:1px">Valeur Totale</div>
-        <div class="balance-amount" id="totalDisplay">0.00 $</div>
+    <div id="auth-section" class="hidden flex flex-col items-center justify-center min-h-screen">
+        <div class="card w-full max-w-md">
+            <h1 class="text-xl font-bold mb-6 text-center italic">Crypto<span class="text-cyan-400">Pro</span></h1>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Mot de passe">
+            <button onclick="handleAuth('login')" class="btn-blue mb-3">Se connecter</button>
+            <button onclick="handleAuth('signup')" class="text-gray-400 text-sm w-full text-center">Créer un compte</button>
+        </div>
     </div>
 
-    <div class="dash-grid">
-        <div class="card">
-            <h2 style="font-size:0.7rem; margin-bottom:1rem">Ajouter un actif</h2>
-            <div class="form-group">
-                <label class="form-label">Nom (ex: bitcoin)</label>
-                <input type="text" id="coin-id" class="form-input" placeholder="ethereum">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Quantité</label>
-                <input type="number" id="coin-amount" class="form-input" placeholder="0.5">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Prix d'achat ($)</label>
-                <input type="number" id="coin-price" class="form-input" placeholder="2500">
-            </div>
-            <button class="btn btn-primary" onclick="addPosition()">Ajouter au Cloud</button>
+    <div id="app-section" class="hidden max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-xl font-bold">Mon Portefeuille</h1>
+            <button onclick="logout()" class="text-red-400 text-xs font-bold uppercase">Déconnexion</button>
         </div>
 
-        <div class="card">
-            <h2 style="font-size:0.7rem; margin-bottom:1rem">Positions Actuelles</h2>
-            <div id="portfolio-list">
-                <p style="color:var(--text3); font-size:0.8rem">Chargement des données...</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card">
+                <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Ajouter un actif</h2>
+                <input type="text" id="coin-id" placeholder="Nom (ex: bitcoin)">
+                <input type="number" id="coin-qty" placeholder="Quantité">
+                <input type="number" id="coin-price" placeholder="Prix d'achat ($)">
+                <button onclick="addAsset()" class="btn-blue mt-2">Ajouter au Cloud</button>
+            </div>
+
+            <div class="card">
+                <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Positions Cloud</h2>
+                <div id="portfolio-list" class="space-y-4 text-sm">
+                    </div>
             </div>
         </div>
     </div>
-</main>
 
-<script>
-// --- INITIALISATION ---
-let supabaseUrl = localStorage.getItem('sb-url');
-let supabaseKey = localStorage.getItem('sb-key');
-let supabase = null;
-let user = null;
-let portfolio = [];
+    <script>
+        // --- LOGIQUE DE DÉMARRAGE ---
+        const urlSaved = localStorage.getItem('sb-url');
+        const keySaved = localStorage.getItem('sb-key');
+        let supabaseClient = null;
 
-if (supabaseUrl && supabaseKey) {
-    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-}
+        window.onload = function() {
+            if (!urlSaved || !keySaved) {
+                document.getElementById('config-section').classList.remove('hidden');
+            } else {
+                try {
+                    supabaseClient = window.supabase.createClient(urlSaved, keySaved);
+                    checkSession();
+                } catch (e) {
+                    alert("Erreur d'initialisation. Vérifiez vos clés.");
+                    localStorage.clear();
+                    location.reload();
+                }
+            }
+        };
 
-document.addEventListener('DOMContentLoaded', async () => {
-    if (!supabase) {
-        document.getElementById('configScreen').classList.add('visible');
-    } else {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-            user = data.session.user;
-            initApp();
-        } else {
-            document.getElementById('authScreen').classList.add('visible');
+        async function checkSession() {
+            const { data } = await supabaseClient.auth.getSession();
+            if (data?.session) {
+                showApp();
+            } else {
+                document.getElementById('auth-section').classList.remove('hidden');
+            }
         }
-    }
-});
 
-function saveConfig() {
-    const url = document.getElementById('cfgUrl').value.trim();
-    const key = document.getElementById('cfgKey').value.trim();
-    if(url && key) {
-        localStorage.setItem('sb-url', url);
-        localStorage.setItem('sb-key', key);
-        location.reload();
-    }
-}
-
-async function handleAuth(type) {
-    const email = document.getElementById('authEmail').value;
-    const password = document.getElementById('authPwd').value;
-    const { data, error } = type === 'login' 
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
-    
-    if (error) alert(error.message);
-    else if (type === 'signup') alert("Inscription réussie ! Connectez-vous.");
-    else location.reload();
-}
-
-async function initApp() {
-    document.getElementById('mainNav').style.display = 'flex';
-    document.getElementById('mainApp').style.display = 'block';
-    document.getElementById('authScreen').classList.remove('visible');
-    document.getElementById('userEmail').innerText = user.email;
-    loadData();
-}
-
-// --- LOGIQUE METIER ---
-async function loadData() {
-    const { data, error } = await supabase
-        .from('positions')
-        .select('*')
-        .eq('user_id', user.id);
-    
-    portfolio = data || [];
-    renderUI();
-    updatePrices();
-}
-
-async function updatePrices() {
-    const ids = [...new Set(portfolio.map(p => p.coin_id))];
-    if (ids.length === 0) return;
-
-    try {
-        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`);
-        const prices = await res.json();
-        renderUI(prices);
-    } catch(e) { console.error("Prix indisponibles"); }
-}
-
-function renderUI(prices = null) {
-    const list = document.getElementById('portfolio-list');
-    let totalVal = 0;
-
-    if (portfolio.length === 0) {
-        list.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text3)">Aucun actif trouvé.</div>`;
-        return;
-    }
-
-    let html = `<table class="pos-table"><thead><tr><th>Actif</th><th>Valeur</th><th>PNL</th><th></th></tr></thead><tbody>`;
-    
-    portfolio.forEach(pos => {
-        const currentPrice = prices ? (prices[pos.coin_id]?.usd || 0) : 0;
-        const value = currentPrice * pos.amount;
-        const pnl = currentPrice ? ((currentPrice - pos.buy_price) / pos.buy_price * 100) : 0;
-        totalVal += value;
-
-        html += `<tr>
-            <td><div style="font-weight:700; text-transform:capitalize">${pos.coin_id}</div><div style="font-size:0.7rem; color:var(--text3)">${pos.amount} pcs</div></td>
-            <td><div style="font-family:var(--mono)">${value.toFixed(2)} $</div></td>
-            <td><span class="pnl-badge ${pnl >= 0 ? 'up' : 'down'}">${pnl.toFixed(2)}%</span></td>
-            <td><button class="delete-btn" onclick="deletePos('${pos.id}')">✕</button></td>
-        </tr>`;
-    });
-
-    list.innerHTML = html + `</tbody></table>`;
-    if (prices) document.getElementById('totalDisplay').innerText = totalVal.toLocaleString() + " $";
-}
-
-async function addPosition() {
-    const coin_id = document.getElementById('coin-id').value.toLowerCase().trim();
-    const amount = parseFloat(document.getElementById('coin-amount').value);
-    const buy_price = parseFloat(document.getElementById('coin-price').value);
-
-    if (!coin_id || isNaN(amount)) return alert("Remplissez tous les champs");
-
-    const { error } = await supabase.from('positions').insert([
-        { user_id: user.id, coin_id, amount, buy_price }
-    ]);
-
-    if (error) alert(error.message);
-    else {
-        document.getElementById('coin-id').value = '';
-        document.getElementById('coin-amount').value = '';
-        loadData();
-    }
-}
-
-async function deletePos(id) {
-    if (confirm("Supprimer cette ligne ?")) {
-        await supabase.from('positions').delete().eq('id', id);
-        loadData();
-    }
-}
-
-function handleLogout() {
-    supabase.auth.signOut().then(() => location.reload());
-}
-<script>
-// --- 1. INITIALISATION SÉCURISÉE ---
-let supabaseUrl = localStorage.getItem('sb-url') || "";
-let supabaseKey = localStorage.getItem('sb-key') || "";
-let supabase = null;
-let user = null;
-let portfolio = [];
-
-// On essaie d'initialiser Supabase uniquement si les clés existent
-if (supabaseUrl && supabaseKey) {
-    try {
-        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-    } catch (e) {
-        console.error("Erreur init Supabase:", e);
-    }
-}
-
-// --- 2. FONCTION DE DÉMARRAGE ---
-async function startApp() {
-    // Si pas de clés, on affiche l'écran de config
-    if (!supabase) {
-        document.getElementById('configScreen').classList.add('visible');
-        return;
-    }
-
-    try {
-        const { data, error } = await supabase.auth.getSession();
-        if (data?.session) {
-            user = data.session.user;
-            showMainInterface();
-        } else {
-            document.getElementById('authScreen').classList.add('visible');
+        // --- ACTIONS ---
+        function saveSettings() {
+            const u = document.getElementById('cfg-url').value.trim();
+            const k = document.getElementById('cfg-key').value.trim();
+            if (u && k) {
+                localStorage.setItem('sb-url', u);
+                localStorage.setItem('sb-key', k);
+                location.reload();
+            }
         }
-    } catch (e) {
-        alert("Erreur de connexion au serveur. Vérifiez vos clés.");
-        document.getElementById('configScreen').classList.add('visible');
-    }
-}
 
-function showMainInterface() {
-    document.getElementById('mainNav').style.display = 'flex';
-    document.getElementById('mainApp').style.display = 'block';
-    document.getElementById('authScreen').classList.remove('visible');
-    document.getElementById('configScreen').classList.remove('visible');
-    document.getElementById('userEmail').innerText = user.email;
-    loadData();
-}
+        async function handleAuth(type) {
+            const e = document.getElementById('email').value;
+            const p = document.getElementById('password').value;
+            const { error } = (type === 'login') 
+                ? await supabaseClient.auth.signInWithPassword({email: e, password: p})
+                : await supabaseClient.auth.signUp({email: e, password: p});
+            
+            if (error) alert(error.message);
+            else if (type === 'signup') alert("Compte créé ! Connectez-vous.");
+            else location.reload();
+        }
 
-// --- 3. GESTION DES DONNÉES ---
-async function loadData() {
-    if (!user) return;
-    const { data, error } = await supabase
-        .from('positions')
-        .select('*')
-        .eq('user_id', user.id);
-    
-    portfolio = data || [];
-    renderUI();
-    updatePrices();
-}
+        function showApp() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('app-section').classList.remove('hidden');
+            fetchData();
+        }
 
-async function addPosition() {
-    const coin_id = document.getElementById('coin-id').value.toLowerCase().trim();
-    const amount = parseFloat(document.getElementById('coin-amount').value);
-    const buy_price = parseFloat(document.getElementById('coin-price').value);
+        async function fetchData() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            const { data, error } = await supabaseClient.from('positions').select('*').eq('user_id', user.id);
+            
+            const list = document.getElementById('portfolio-list');
+            if (data && data.length > 0) {
+                list.innerHTML = data.map(item => `
+                    <div class="flex justify-between border-b border-gray-800 pb-2">
+                        <span class="capitalize font-bold">${item.coin_id}</span>
+                        <span>${item.amount} units</span>
+                        <button onclick="deleteItem('${item.id}')" class="text-red-500">✕</button>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = "<p class='text-gray-500 italic'>Aucune donnée...</p>";
+            }
+        }
 
-    if (!coin_id || isNaN(amount)) return alert("Remplissez tous les champs");
+        async function addAsset() {
+            const id = document.getElementById('coin-id').value.toLowerCase().trim();
+            const qty = document.getElementById('coin-qty').value;
+            const price = document.getElementById('coin-price').value;
+            const { data: { user } } = await supabaseClient.auth.getUser();
 
-    const { error } = await supabase.from('positions').insert([
-        { user_id: user.id, coin_id, amount, buy_price }
-    ]);
+            if(id && qty) {
+                await supabaseClient.from('positions').insert([{ 
+                    coin_id: id, amount: qty, buy_price: price, user_id: user.id 
+                }]);
+                location.reload();
+            }
+        }
 
-    if (error) alert(error.message);
-    else {
-        document.getElementById('coin-id').value = '';
-        document.getElementById('coin-amount').value = '';
-        loadData();
-    }
-}
+        async function deleteItem(id) {
+            await supabaseClient.from('positions').delete().eq('id', id);
+            fetchData();
+        }
 
-async function updatePrices() {
-    const ids = [...new Set(portfolio.map(p => p.coin_id))];
-    if (ids.length === 0) return;
-
-    try {
-        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`);
-        const prices = await res.json();
-        renderUI(prices);
-    } catch(e) { console.error("Prix API indisponibles"); }
-}
-
-function renderUI(prices = null) {
-    const list = document.getElementById('portfolio-list');
-    let totalVal = 0;
-
-    if (portfolio.length === 0) {
-        list.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text3)">Aucun actif.</div>`;
-        return;
-    }
-
-    let html = `<table class="pos-table"><thead><tr><th>Actif</th><th>Valeur</th><th>PNL</th><th></th></tr></thead><tbody>`;
-    portfolio.forEach(pos => {
-        const currentPrice = prices ? (prices[pos.coin_id]?.usd || 0) : 0;
-        const value = currentPrice * pos.amount;
-        const pnl = currentPrice ? ((currentPrice - pos.buy_price) / pos.buy_price * 100) : 0;
-        totalVal += value;
-
-        html += `<tr>
-            <td><b>${pos.coin_id}</b><br><small>${pos.amount}</small></td>
-            <td>${value.toFixed(2)} $</td>
-            <td><span class="pnl-badge ${pnl >= 0 ? 'up' : 'down'}">${pnl.toFixed(2)}%</span></td>
-            <td><button onclick="deletePos('${pos.id}')">✕</button></td>
-        </tr>`;
-    });
-    list.innerHTML = html + `</tbody></table>`;
-    if (prices) document.getElementById('totalDisplay').innerText = totalVal.toLocaleString() + " $";
-}
-
-// --- 4. CONFIG & AUTH ---
-function saveConfig() {
-    const url = document.getElementById('cfgUrl').value.trim();
-    const key = document.getElementById('cfgKey').value.trim();
-    if(url && key) {
-        localStorage.setItem('sb-url', url);
-        localStorage.setItem('sb-key', key);
-        location.reload();
-    } else {
-        alert("Veuillez remplir les deux champs");
-    }
-}
-
-async function handleAuth(type) {
-    const email = document.getElementById('authEmail').value;
-    const password = document.getElementById('authPwd').value;
-    const { data, error } = type === 'login' 
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
-    
-    if (error) alert(error.message);
-    else if (type === 'signup') alert("Compte créé ! Connectez-vous.");
-    else location.reload();
-}
-
-async function deletePos(id) {
-    if (confirm("Supprimer ?")) {
-        await supabase.from('positions').delete().eq('id', id);
-        loadData();
-    }
-}
-
-function handleLogout() {
-    supabase.auth.signOut().then(() => location.reload());
-}
-
-// LANCEMENT REEL
-startApp();
-</script>
+        function logout() {
+            supabaseClient.auth.signOut().then(() => location.reload());
+        }
+    </script>
 </body>
 </html>
