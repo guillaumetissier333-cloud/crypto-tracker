@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CryptoTrackerPro.v1.2</title>
+<title>CryptoTrackerPro.v1.3</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CryptoPro">
@@ -1681,6 +1681,33 @@ function showNotif(type, title, sub) {
   cont.appendChild(el);
   setTimeout(() => el.remove(), 4000);
 }
-</script>
+// --- CONFIGURATION SUPABASE (À REMPLIR) ---
+const SUPABASE_URL = https://olfbpzceedwutwbwbmka.supabase.co;
+const SUPABASE_KEY = sb_publishable_1SosYaSUgF1WzLkVg-aURA_9yvhbsxW;
+
+// --- LOGIQUE DE SYNCHRONISATION ---
+async function saveToCloud() {
+    const { data, error } = await supabase
+        .from('portfolios')
+        .upsert({ id: 1, data: portfolio }); // On utilise l'ID 1 pour ton compte unique
+    if (error) console.error("Erreur de sauvegarde:", error);
+}
+
+async function loadFromCloud() {
+    const { data, error } = await supabase
+        .from('portfolios')
+        .select('data')
+        .eq('id', 1)
+        .single();
+    
+    if (data && data.data) {
+        portfolio = data.data;
+        localStorage.setItem('myCryptoPortfolio', JSON.stringify(portfolio));
+        renderDashboard();
+    }
+}
+
+// Ajoute l'appel à saveToCloud() dans tes fonctions addPosition et deleteAsset
+// Et loadFromCloud() dans ton DOMContentLoaded
 </body>
 </html>
