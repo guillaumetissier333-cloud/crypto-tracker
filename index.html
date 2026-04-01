@@ -275,6 +275,162 @@ async function deletePos(id) {
 function handleLogout() {
     supabase.auth.signOut().then(() => location.reload());
 }
+<script>
+// --- 1. INITIALISATION SÉCURISÉE ---
+let supabaseUrl = localStorage.getItem('sb-url') || "";
+let supabaseKey = localStorage.getItem('sb-key') || "";
+let supabase = null;
+let user = null;
+let portfolio = [];
+
+// On essaie d'initialiser Supabase uniquement si les clés existent
+if (supabaseUrl && supabaseKey) {
+    try {
+        supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    } catch (e) {
+        console.error("Erreur init Supabase:", e);
+    }
+}
+
+// --- 2. FONCTION DE DÉMARRAGE ---
+async function startApp() {
+    // Si pas de clés, on affiche l'écran de config
+    if (!supabase) {
+        document.getElementById('configScreen').classList.add('visible');
+        return;
+    }
+
+    try {
+        const { data, error } = await supabase.auth.getSession();
+        if (data?.session) {
+            user = data.session.user;
+            showMainInterface();
+        } else {
+            document.getElementById('authScreen').classList.add('visible');
+        }
+    } catch (e) {
+        alert("Erreur de connexion au serveur. Vérifiez vos clés.");
+        document.getElementById('configScreen').classList.add('visible');
+    }
+}
+
+function showMainInterface() {
+    document.getElementById('mainNav').style.display = 'flex';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('authScreen').classList.remove('visible');
+    document.getElementById('configScreen').classList.remove('visible');
+    document.getElementById('userEmail').innerText = user.email;
+    loadData();
+}
+
+// --- 3. GESTION DES DONNÉES ---
+async function loadData() {
+    if (!user) return;
+    const { data, error } = await supabase
+        .from('positions')
+        .select('*')
+        .eq('user_id', user.id);
+    
+    portfolio = data || [];
+    renderUI();
+    updatePrices();
+}
+
+async function addPosition() {
+    const coin_id = document.getElementById('coin-id').value.toLowerCase().trim();
+    const amount = parseFloat(document.getElementById('coin-amount').value);
+    const buy_price = parseFloat(document.getElementById('coin-price').value);
+
+    if (!coin_id || isNaN(amount)) return alert("Remplissez tous les champs");
+
+    const { error } = await supabase.from('positions').insert([
+        { user_id: user.id, coin_id, amount, buy_price }
+    ]);
+
+    if (error) alert(error.message);
+    else {
+        document.getElementById('coin-id').value = '';
+        document.getElementById('coin-amount').value = '';
+        loadData();
+    }
+}
+
+async function updatePrices() {
+    const ids = [...new Set(portfolio.map(p => p.coin_id))];
+    if (ids.length === 0) return;
+
+    try {
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=usd`);
+        const prices = await res.json();
+        renderUI(prices);
+    } catch(e) { console.error("Prix API indisponibles"); }
+}
+
+function renderUI(prices = null) {
+    const list = document.getElementById('portfolio-list');
+    let totalVal = 0;
+
+    if (portfolio.length === 0) {
+        list.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text3)">Aucun actif.</div>`;
+        return;
+    }
+
+    let html = `<table class="pos-table"><thead><tr><th>Actif</th><th>Valeur</th><th>PNL</th><th></th></tr></thead><tbody>`;
+    portfolio.forEach(pos => {
+        const currentPrice = prices ? (prices[pos.coin_id]?.usd || 0) : 0;
+        const value = currentPrice * pos.amount;
+        const pnl = currentPrice ? ((currentPrice - pos.buy_price) / pos.buy_price * 100) : 0;
+        totalVal += value;
+
+        html += `<tr>
+            <td><b>${pos.coin_id}</b><br><small>${pos.amount}</small></td>
+            <td>${value.toFixed(2)} $</td>
+            <td><span class="pnl-badge ${pnl >= 0 ? 'up' : 'down'}">${pnl.toFixed(2)}%</span></td>
+            <td><button onclick="deletePos('${pos.id}')">✕</button></td>
+        </tr>`;
+    });
+    list.innerHTML = html + `</tbody></table>`;
+    if (prices) document.getElementById('totalDisplay').innerText = totalVal.toLocaleString() + " $";
+}
+
+// --- 4. CONFIG & AUTH ---
+function saveConfig() {
+    const url = document.getElementById('cfgUrl').value.trim();
+    const key = document.getElementById('cfgKey').value.trim();
+    if(url && key) {
+        localStorage.setItem('sb-url', url);
+        localStorage.setItem('sb-key', key);
+        location.reload();
+    } else {
+        alert("Veuillez remplir les deux champs");
+    }
+}
+
+async function handleAuth(type) {
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPwd').value;
+    const { data, error } = type === 'login' 
+        ? await supabase.auth.signInWithPassword({ email, password })
+        : await supabase.auth.signUp({ email, password });
+    
+    if (error) alert(error.message);
+    else if (type === 'signup') alert("Compte créé ! Connectez-vous.");
+    else location.reload();
+}
+
+async function deletePos(id) {
+    if (confirm("Supprimer ?")) {
+        await supabase.from('positions').delete().eq('id', id);
+        loadData();
+    }
+}
+
+function handleLogout() {
+    supabase.auth.signOut().then(() => location.reload());
+}
+
+// LANCEMENT REEL
+startApp();
 </script>
 </body>
 </html>
